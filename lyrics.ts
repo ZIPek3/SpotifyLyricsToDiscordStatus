@@ -50,6 +50,18 @@ function cacheAndReturn(trackId: string, value: LyricLine[] | null) {
 }
 
 export async function initLyricsNetworkAccess() {
+  // Endcord has no VencordNative.csp — treat domains as allowed and let fetch decide.
+  const hasCspApi =
+    typeof (globalThis as any).VencordNative !== "undefined" &&
+    (globalThis as any).VencordNative?.csp;
+
+  if (!hasCspApi) {
+    setNetworkAccess("allowed");
+    setLyricsifyNetworkAccess("allowed");
+    debugLog("No VencordNative CSP API (Endcord). Allowing lrclib + lyricsify.");
+    return;
+  }
+
   if (networkAccess === "unknown") {
     const url = "https://lrclib.net";
     const directives = ["connect-src"];
@@ -59,9 +71,13 @@ export async function initLyricsNetworkAccess() {
     } else {
       if (!permissionRequested) {
         permissionRequested = true;
-        const result = await VencordNative.csp.requestAddOverride(url, directives, "SpotifyLyricsToDiscordStatus").catch(() => "cancelled");
+        const result = await VencordNative.csp
+          .requestAddOverride(url, directives, "SpotifyLyricsToDiscordStatus")
+          .catch(() => "cancelled");
         if (result === "ok") {
-          console.info("[SpotifyLyricsToDiscordStatus] CSP permission granted for lrclib.net. Please fully restart Discord to apply it.");
+          console.info(
+            "[SpotifyLyricsToDiscordStatus] CSP permission granted for lrclib.net. Please fully restart Discord to apply it."
+          );
         }
       }
       setNetworkAccess("blocked");
@@ -77,9 +93,13 @@ export async function initLyricsNetworkAccess() {
     } else {
       if (!lyricsifyPermissionRequested) {
         lyricsifyPermissionRequested = true;
-        const result = await VencordNative.csp.requestAddOverride(url, directives, "SpotifyLyricsToDiscordStatus").catch(() => "cancelled");
+        const result = await VencordNative.csp
+          .requestAddOverride(url, directives, "SpotifyLyricsToDiscordStatus")
+          .catch(() => "cancelled");
         if (result === "ok") {
-          console.info("[SpotifyLyricsToDiscordStatus] CSP permission granted for lyricsify.com. Please fully restart Discord to apply it.");
+          console.info(
+            "[SpotifyLyricsToDiscordStatus] CSP permission granted for lyricsify.com. Please fully restart Discord to apply it."
+          );
         }
       }
       setLyricsifyNetworkAccess("blocked");
@@ -293,7 +313,9 @@ export async function getLyrics(
   if (networkAccess !== "allowed" && lyricsifyNetworkAccess !== "allowed") {
     if (!blockedWarned) {
       blockedWarned = true;
-      console.warn("[SpotifyLyricsToDiscordStatus] Both LRCLIB and Lyricsify are blocked by CSP. Grant permission prompts and fully restart Discord.");
+      console.warn(
+        "[SpotifyLyricsToDiscordStatus] Both LRCLIB and Lyricsify are blocked by CSP. Grant permission prompts and fully restart Discord."
+      );
     }
     cacheAndReturn(trackId, null);
     debugLog("Lyrics fetch blocked by CSP", { trackId, trackName, artistName });

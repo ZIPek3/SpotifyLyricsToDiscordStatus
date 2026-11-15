@@ -1,4 +1,4 @@
-# SpotifyLyricsToDiscordStatus (Vencord Userplugin)
+# SpotifyLyricsToDiscordStatus (Discord Userplugin)
 
 
 ## Overview
